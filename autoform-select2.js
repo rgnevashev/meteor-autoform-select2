@@ -2,6 +2,9 @@
 
 AutoForm.addInputType("select2", {
   template: "afSelect2",
+  valueOut: function () {
+    return this.val();
+  },
   valueConverters: {
     "stringArray": function (val) {
       if (_.isArray(val)) {
@@ -50,6 +53,15 @@ AutoForm.addInputType("select2", {
 
     // build items list
     context.items = [];
+
+    // When single-select and placeholder is passed,
+    // the first option should be an empty option.
+    var multiple = itemAtts.multiple;
+    var select2Options = itemAtts.select2Options || {};
+
+    if (!multiple && select2Options.placeholder) {
+      context.items.push('');
+    }
 
     // Check if option is selected
     var isSelected = function(conVal, optVal) {
@@ -102,7 +114,7 @@ Template.afSelect2.helpers({
 });
 
 Template.afSelect2.events({
-  'select2:select select': function (event, template) {
+  'change select': function (event, template) {
     // When select2 selection changes, we update the `selected` attr
     // on the real select element. This persists better when the DOM
     // changes, allowing us to retain selection properly by using this
@@ -118,7 +130,7 @@ Template.afSelect2.events({
   }
 });
 
-Template.afSelect2.rendered = function () {
+Template.afSelect2.onRendered(function () {
   var template = this;
   var $s = template.$('select');
 
@@ -168,15 +180,15 @@ Template.afSelect2.rendered = function () {
       $s.val(values).trigger('change');
     }
   });
-};
+});
 
-Template.afSelect2.destroyed = function () {
+Template.afSelect2.onDestroyed(function () {
   try {
-    if (this.view && this.view._domrange) {
+    if (this.view && this.view._domrange && this.$('select').data('select2')) {
       this.$('select').select2('destroy');
     }
   } catch (error) {}
-};
+});
 
 /*
  *  BOOTSTRAP THEME
